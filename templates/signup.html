@@ -1,6 +1,29 @@
-<form method="POST">
-    {%csrf_token %}
-    {{form}}
-    <button type="submit">Submit </button>
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+    <form action="" method="post" novalidate>
+      {% csrf_token %}       
+      {% if form.non_field_errors %}
+       {%for error in form.non_field_errors %}
+            <p> {{error}} </p>
+       {%endfor%}
+    {%endif%} 
+      {%for fm in form %}
+          {{fm.label_tag}} {{fm}} {{fm.errors|striptags}} <br> <br>
 
-</form>  
+      {%endfor%}
+      <input type="submit" value="Submit"/>
+    </form>
+    {%if messages %}
+       {%for message in messages %}
+             <small {%if messages.tags %} class="{{messages.tags}}" {%endif%}> {{message}}  </small>
+       {%endfor%}
+       {%endif%}
+       <a href="{% url 'login'%}"> 
+         Login
+       </a>
+</body>
+
+</html>

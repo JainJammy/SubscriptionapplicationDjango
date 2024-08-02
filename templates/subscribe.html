@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Subscribe</title>
+</head>
+<body>
+    <h1>Subscribe to {{ subscription_plan.name }}</h1>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Proceed to Payment</button>
+    </form>
+</body>
+</html>

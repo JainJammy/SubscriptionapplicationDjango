@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+    <h1>Profile Page !!!!!!!!!!   </h1>
+    <h3> Welcome {{name}} </h3>
+    {% if subscriptions %}
+    {%for sub in subscriptions %}
+    <h2>{{ sub.subscription.subscription_plan.name }}</h2>
+     {%if sub.is_active %}
+         <p> Your subscription is active Next Billing date {{sub.subscription.next_billing_date}} </p>
+           
+            <form method="post" action="{% url 'cancel_subscription' sub.subscription.id %}">
+                {% csrf_token %}
+                <button type="submit">Cancel Subscription</button>
+            </form>
+    
+      {%elif sub.is_trial %}
+          <p>You are currently on free trial </p>
+          <p> Days left in trial {{sub.days_left_in_trial}} </p>
+          <a href="{%url 'subscribe' sub.subscription.subscription_plan.id%}"> Subscribe Now </a>
+       {%elif not sub.is_trial %}
+       <a href="{%url 'subscribe' sub.subscription.subscription_plan.id%}"> Subscribe Now </a>
+          
+       {%endif%}
+
+    {%endfor%}
+    {%else%}
+      <h1>Please request admin to map the subscriptions table to your user id
+         {%endif%}
+
+
+    {%if messages %}
+       {%for message in messages %}
+             <small {%if messages.tags %} class="{{messages.tags}}" {%endif%}> {{message}}  </small>
+       {%endfor%}
+       {%endif%}
+       <a href="{%url "logout" %}"> Logout </a>
+
+
+</body>    

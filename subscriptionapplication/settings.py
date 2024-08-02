@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'subscription'
+    'subscription',
 ]
 
 MIDDLEWARE = [
@@ -48,6 +48,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'subscriptionapplication.middleware.MyMiddleware'
 ]
 
 ROOT_URLCONF = 'subscriptionapplication.urls'
@@ -122,3 +123,16 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+CELERY_TIMEZONE="Asia/Kolkata"
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+PAYPAL_CLIENT_ID="AbNAMrGsayA5JzKz7q7xwZ4926Z3e9aZu1_haCG6B5dhC8amW0IxeckCl7ktWzsZF8QP2eco3TYKvZVn"
+PAYPAL_SECRET_ID="ECCBQA2ijvOgOzYKjTNrdKSFVtjj6XPswIAzSRA5peNIpBaHPEUhxlKFzvv-CwEEiEgddXSLqU1q09lr"
+PAYPAL_MODE='sandbox'
+PAYPAL_RETURN_URL = 'http://127.0.0.1:8000/paypal_return/'  # Corrected this line
+PAYPAL_CANCEL_URL="http://127.0.0.1:8000/paypal_cancel/"
+#LOGIN_URL="/login/"
