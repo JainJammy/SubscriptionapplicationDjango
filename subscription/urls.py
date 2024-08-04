@@ -10,6 +10,7 @@ urlpatterns = [
     path("logout/",views.user_logout,name="logout"),
     path('subscribe/<int:subscription_plan_id>/', views.subscribe, name='subscribe'),
     path("cancel_subscription/<int:id>/",views.cancel_subscription,name="cancel_subscription"),
+    path("paypal_auto_return/",views.auto_return,name="pay_pal_auto_return"),
     path("paypal_return/",views.paypal_return,name="paypal_return"),
     path("paypal_cancel/",views.paypal_cancel,name="paypal_cancel")    
 

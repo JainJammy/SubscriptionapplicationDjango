@@ -19,9 +19,11 @@ class UserSubscription(models.Model):
     start_date=models.DateTimeField(auto_now_add=True)
     is_active=models.BooleanField(default=False)
     has_trial=models.BooleanField(default=True)
-    next_billing_date=models.DateTimeField()
+    next_billing_date=models.DateField()
     """Paypal Payer id saving in the database"""
     payer_id = models.CharField(max_length=255, null=True, blank=True) 
+    billing_agreement_id = models.CharField(max_length=255, null=True, blank=True)  # New field
+    start_date = models.DateTimeField(auto_now_add=True)
 
 """Many to Many relationship between User model and Subscription"""
 

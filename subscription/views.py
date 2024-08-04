@@ -8,6 +8,7 @@ from django.shortcuts import render,redirect
 from django.views.decorators.csrf import csrf_exempt
 from subscription.models import *
 from datetime import timedelta
+from datetime import datetime
 from django.utils import timezone
 import paypalrestsdk
 from django.conf import settings
@@ -74,68 +75,255 @@ def user_profile(request):
     else:
         return HttpResponseRedirect("/login/")
 #@login_required    
-def subscribe(request,subscription_plan_id):
+"""def subscribe(request,subscription_plan_id):
     #import pdb
     #pdb.set_trace()
     if request.user.is_authenticated:
-        subscription_plan=SubscriptionPlan.objects.get(id=subscription_plan_id)
         if request.method == "POST":
-            """"Paypal Payload structure"""
-            #https://developer.paypal.com/docs/api/payments/v1/
-            payment=paypalrestsdk.Payment({
-                "intent":"sale",
-                "payer":{
-                    "payment_method":"paypal"
+           subscription_plan=SubscriptionPlan.objects.get(id=subscription_plan_id)
+           print(subscription_plan)
+           billing_plan = paypalrestsdk.BillingPlan({
+              "name": f"{subscription_plan.name} Plan",
+               "description": f"Subscription plan for {subscription_plan.name}",
+               "type": "fixed",
+                "payment_definitions": [{
+                "name": "Regular Payments",
+                "type": "REGULAR",
+                "frequency": "MONTH",
+                "frequency_interval": "1",
+                "amount": {
+                 "value": str(subscription_plan.price),
+                 "currency": "USD"
+                  },
+                  "cycles": "0",  # 0 means infinite cycles
+                  "charge_models": []
+                  }],
+                 "merchant_preferences": {
+                 "setup_fee": {
+                "value": "0",
+                "currency": "USD"
+                 },
+                "cancel_url": request.build_absolute_uri('/paypal_cancel/'),
+                "return_url": request.build_absolute_uri('/auto_return/'),
+                "auto_bill_amount": "YES",
+                "initial_fail_amount_action": "CONTINUE",
+                "max_fail_attempts": "1"
+                } 
+                })
+           if billing_plan.create() and billing_plan.activate():
+              # Create Billing Agreement
+              start_date = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%dT%H:%M:%SZ')
+              billing_agreement = paypalrestsdk.BillingAgreement({
+              "name": f"{subscription_plan.name} Agreement",
+              "description": f"Agreement for {subscription_plan.name} plan",
+              "start_date": start_date,
+               "plan": {
+                    "id": billing_plan.id
                 },
-                "redirect_urls":{
-                    "return_url":settings.PAYPAL_RETURN_URL,
-                    "cancel_url":settings.PAYPAL_CANCEL_URL
-                },
-                "transactions":[
-                    {
-                        "item_list":{
-                            "items":[{
-                                "name":subscription_plan.name,
-                                "sku":f"sub_{subscription_plan_id}",
-                                "price":str(subscription_plan.price),
-                                "currency":"USD",
-                                "quantity":1
-                                
-                            }]
-                        },
-                        "amount":{
-                            "total":str(subscription_plan.price),
-                            "currency":"USD"
-                        },
-                        "description":f"Subscription to {subscription_plan.name}"
-                    }
-                ]
+                "payer": {
+                    "payment_method": "paypal"
+                }
+               })     
+           if billing_agreement.create():
+               for link in billing_agreement.links:
+                   if link.rel == "approval_url":
+                      approval_url = link.href
+                      return redirect(approval_url)
+           else:
+                 return HttpResponseBadRequest("Bad Request Billing request")
+     
+           return render(request, 'subscribe.html', {'subscription_plan': subscription_plan})
+    else:
+        return HttpResponseRedirect("/login/")"""
 
-            })
+def create_billing_plan(subscription):
+    billing_plan = paypalrestsdk.BillingPlan({
+        "name": f"{subscription.name} Plan",
+        "description": f"Monthly subscription plan for {subscription.name}",
+        "type": "fixed",
+        "payment_definitions": [{
+            "name": "Regular Payments",
+            "type": "REGULAR",
+            "frequency": "DAY",
+            "frequency_interval": "1",
+            "amount": {
+                "value": str(subscription.price),
+                "currency": "USD"
+            },
+            "cycles": "12",
+            "charge_models": []
+        }],
+        "merchant_preferences": {
+            "setup_fee": {
+                "value": "0",
+                "currency": "USD"
+            },
+            "cancel_url": "http://127.0.0.1:8000/paypal_cancel/",
+            "return_url": "http://127.0.0.1:8000/paypal_auto_return/",
+            "auto_bill_amount": "YES",
+            "initial_fail_amount_action": "CONTINUE",
+            "max_fail_attempts": "1"
+        }
+    })
+    if billing_plan.create():
+        if billing_plan.activate():
+            return billing_plan
+        else:
+            print(billing_plan.error)
+            return None
+    else:
+        print(billing_plan.error)
+        return None
+        
+def create_billing_agreement(user_subscription,subscription_plan,plan_id):
+    #import pdb
+    #pdb.set_trace()
+    #i#mport pdb
+    #pdb.set_trace()
+    #start_date = user_subscription.next_billing_date.strftime('%Y-%m-%dT%H:%M:%SZ')
+    start_date = (datetime.utcnow() + timedelta(minutes=1)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    #start_date = (user_subscription.next_billing_date + timedelta(minutes=5)).strftime('%Y-%m-%dT%H:%M:%SZ')
+    #start_date=datetime.now()+timedelta(minutes=5)
+    billing_agreement = paypalrestsdk.BillingAgreement({
+        "name": f"{subscription_plan.name} Agreement",
+        "description": f"Agreement for {subscription_plan.name} plan",
+        "start_date": start_date,
+        "plan": {
+            "id": plan_id
+        },
+        "payer": {
+            "payment_method": "paypal"
+        }
+    })
+    if billing_agreement.create():
+        for link in billing_agreement.links:
+            if link.rel == "approval_url":
+                approval_url = link.href
+                print(f"Redirect user to {approval_url}")
+                return approval_url
+    else:
+        print(billing_agreement.error)
+        return None
 
-            if payment.create():
-                for link in payment.links:
-                    if link.rel == "approval_url":
-                        approval_url=link.href
-                        break
-                return redirect(approval_url)
-            else:
-                return HttpResponseBadRequest("Payment creation failed")
-        return render(request, 'subscribe.html', {'subscription_plan': subscription_plan})
+
+def subscribe(request, subscription_plan_id):
+    if request.user.is_authenticated:
+       if request.method == "POST":
+          subscription_plan = SubscriptionPlan.objects.get(id=subscription_plan_id)
+          print(subscription_plan)
+          # Create the billing plan
+          billing_plan = create_billing_plan(subscription_plan)
+          if billing_plan:
+             user_subscription = UserSubscription.objects.get(user=request.user, subscription_plan=subscription_plan)
+             next_billing_date = user_subscription.next_billing_date
+             approval_url = create_billing_agreement(user_subscription,subscription_plan,billing_plan.id)
+             if approval_url:
+                 print("subscription id",subscription_plan.id)
+                 request.session['subscription_plan_id'] = subscription_plan.id
+                 return redirect(approval_url)
+             else:
+                    return HttpResponseBadRequest("Failed to create billing agreement")
+          else:
+                return HttpResponseBadRequest("Failed to create billing plan")
+       else:  
+        subscription_plan = SubscriptionPlan.objects.get(id=subscription_plan_id)
+        print(subscription_plan)
+        return render(request, "subscribe.html", {"subscription_plan": subscription_plan})
+
     else:
         return HttpResponseRedirect("/login/")
+
 def paypal_cancel(request):
-    return render(request, 'payment_cancelled.html')
+    return  render(request, 'payment_cancelled.html')
+
+def execute_agreement(token):
+    billing_agreement = paypalrestsdk.BillingAgreement.execute(token)
+    if billing_agreement.state == "Active":
+        return billing_agreement
+    else:
+        print(billing_agreement.error)
+        return None
+
+
+@csrf_exempt
+def auto_return(request):
+    #import pdb
+    #pdb.set_trace()
+    token = request.GET.get('token')
+    if token:
+        billing_agreement = paypalrestsdk.BillingAgreement.execute(token)
+        if billing_agreement.state == "Active":
+           payer_id = billing_agreement.payer.payer_info.payer_id
+           billing_agreement_id = billing_agreement.id 
+           print(request)
+           subscription_plan_id = request.session.get('subscription_plan_id')
+           print("Subscription",subscription_plan_id)
+           if not subscription_plan_id:
+                return HttpResponseBadRequest("Subscription plan not found in session")
+           try:
+                subscription_plan = SubscriptionPlan.objects.get(id=subscription_plan_id)
+           except SubscriptionPlan.DoesNotExist:
+                return HttpResponseBadRequest("Subscription plan does not exist")
+
+
+           # Find the user's subscription and update it
+           user_subscription = UserSubscription.objects.filter(user=request.user,id=subscription_plan_id).first()
+           user_subscription.payer_id = payer_id
+           user_subscription.billing_agreement_id = billing_agreement_id
+           user_subscription.next_billing_date = datetime.now() + timedelta(days=30)  # Set the next billing date
+           user_subscription.save()
+           subscription_plan = user_subscription.subscription_plan
+           payment = paypalrestsdk.Payment({
+                    "intent": "sale",
+                    "payer": {
+                        "payment_method": "paypal"
+                    },
+                    "redirect_urls": {
+                        "return_url": settings.PAYPAL_RETURN_URL,
+                        "cancel_url": settings.PAYPAL_CANCEL_URL
+                    },
+                    "transactions": [
+                        {
+                            "item_list": {
+                                "items": [{
+                                    "name": subscription_plan.name,
+                                    "sku": f"sub_{subscription_plan.id}",
+                                    "price": str(subscription_plan.price),
+                                    "currency": "USD",
+                                    "quantity": 1
+                                }]
+                            },
+                            "amount": {
+                                "total": str(subscription_plan.price),
+                                "currency": "USD"
+                            },
+                            "description": f"Subscription to {subscription_plan.name}"
+                        }
+                    ]
+                })
+
+           if payment.create():
+                for link in payment.links:
+                    if link.rel == "approval_url":
+                       approval_url = link.href
+                       break
+                return redirect(approval_url)
+           else:
+                return HttpResponseBadRequest("Payment creation failed")
+        else:
+            return HttpResponseBadRequest("Billing state not active")
 
 """PayPal will send the POST request"""
+
 @csrf_exempt
 def paypal_return(request):
+    print("view hitted................................")
     payment_id = request.GET.get('paymentId')
     payer_id = request.GET.get('PayerID')
     
     payment = paypalrestsdk.Payment.find(payment_id)
     if payment.execute({"payer_id": payer_id}):
-        subscription_plan_id = payment.transactions[0].item_list.items[0].sku.split('_')[-1]
+        subscription_plan_id = payment.transactions[0].item_list.items[0].sku.split('_')[-1] 
         subscription_plan = SubscriptionPlan.objects.get(id=subscription_plan_id)
         existing_subscription = UserSubscription.objects.filter(user=request.user, subscription_plan=subscription_plan).last()
         if existing_subscription:

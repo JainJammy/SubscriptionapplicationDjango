@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'subscription',
+
 ]
 
 MIDDLEWARE = [
@@ -75,12 +76,12 @@ WSGI_APPLICATION = 'subscriptionapplication.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+#DATABASES = {
+    #'default': {
+       #'ENGINE': 'django.db.backends.sqlite3',
+       # 'NAME': BASE_DIR / 'db.sqlite3',
+    #}
+#}
 
 
 # Password validation
@@ -129,10 +130,21 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
+DATABASES={
+    'default':{
+        'ENGINE':'django.db.backends.mysql',
+        'NAME':'Billing',
+        'USER':"admin",
+        'PASSWORD':'NakodaBhairavShankeshwarAmbemata',
+        'HOST':'database-1.c0ldyywuvrvk.ap-south-1.rds.amazonaws.com',
+        'PORT':3306
+    }
+}
 
 PAYPAL_CLIENT_ID="AbNAMrGsayA5JzKz7q7xwZ4926Z3e9aZu1_haCG6B5dhC8amW0IxeckCl7ktWzsZF8QP2eco3TYKvZVn"
 PAYPAL_SECRET_ID="ECCBQA2ijvOgOzYKjTNrdKSFVtjj6XPswIAzSRA5peNIpBaHPEUhxlKFzvv-CwEEiEgddXSLqU1q09lr"
 PAYPAL_MODE='sandbox'
 PAYPAL_RETURN_URL = 'http://127.0.0.1:8000/paypal_return/'  # Corrected this line
 PAYPAL_CANCEL_URL="http://127.0.0.1:8000/paypal_cancel/"
+PAYPAL_BILLING_RETURN_URL="http://127.0.0.1:8000/auto_return/"
 #LOGIN_URL="/login/"
