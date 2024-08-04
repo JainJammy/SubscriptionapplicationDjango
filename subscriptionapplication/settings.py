@@ -132,12 +132,7 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 DATABASES={
     'default':{
-        'ENGINE':'django.db.backends.mysql',
-        'NAME':'Billing',
-        'USER':"admin",
-        'PASSWORD':'NakodaBhairavShankeshwarAmbemata',
-        'HOST':'database-1.c0ldyywuvrvk.ap-south-1.rds.amazonaws.com',
-        'PORT':3306
+       
     }
 }
 
