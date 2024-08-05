@@ -267,7 +267,11 @@ def auto_return(request):
 
 
            # Find the user's subscription and update it
-           user_subscription = UserSubscription.objects.filter(user=request.user,id=subscription_plan_id).first()
+           #user=User.objects.get(id=request.user.id)
+           #print(user.email)
+           user_subscription = UserSubscription.objects.filter(user=request.user,subscription_plan__id=subscription_plan_id).first()
+           print("request.user",request.user)
+           print("user_subscription",user_subscription)
            user_subscription.payer_id = payer_id
            user_subscription.billing_agreement_id = billing_agreement_id
            user_subscription.next_billing_date = datetime.now() + timedelta(days=30)  # Set the next billing date
